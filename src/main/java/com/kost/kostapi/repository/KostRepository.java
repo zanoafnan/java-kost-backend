@@ -5,9 +5,14 @@ import com.kost.kostapi.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-public interface KostRepository extends JpaRepository<Kost, Long> {
+public interface KostRepository
+        extends JpaRepository<Kost, Long>,
+        JpaSpecificationExecutor<Kost> {
 
-    Page<Kost> findByOwner(User owner, Pageable pageable);
+    Page<Kost> findByOwner(
+            User owner,
+            Pageable pageable);
 
 }
