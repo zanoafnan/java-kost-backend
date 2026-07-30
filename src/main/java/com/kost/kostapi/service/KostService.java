@@ -18,108 +18,125 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class KostService {
 
-    private final KostRepository kostRepository;
+        private final KostRepository kostRepository;
 
-    public KostResponse create(
-            User owner,
-            CreateKostRequest request) {
+        private Kost getOwnedKost(
+                        Long id,
+                        User owner) {
 
-        Kost kost = Kost.builder()
-                .name(request.name())
-                .description(request.description())
-                .location(request.location())
-                .price(request.price())
-                .owner(owner)
-                .build();
+                Kost kost = kostRepository
+                                .findById(id)
+                                .orElseThrow(() -> new EntityNotFoundException(
+                                                "Kost not found"));
 
-        return KostMapper.toResponse(
-                kostRepository.save(kost));
-    }
+                if (!kost.getOwner().getId().equals(owner.getId())) {
+                        throw new SecurityException(
+                                        "You do not own this kost.");
+                }
 
-    public Page<KostResponse> ownerKosts(
-            User owner,
-            int page,
-            int size) {
-
-        Pageable pageable = PageRequest.of(
-                page,
-                size,
-                Sort.by("id").descending());
-
-        return kostRepository
-                .findByOwner(owner, pageable)
-                .map(KostMapper::toResponse);
-    }
-
-    public KostResponse findById(
-            Long id) {
-
-        Kost kost = kostRepository
-                .findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Kost not found"));
-
-        return KostMapper.toResponse(kost);
-    }
-
-    public KostResponse update(
-            Long id,
-            UpdateKostRequest request) {
-
-        Kost kost = kostRepository
-                .findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Kost not found"));
-
-        if (request.name() != null) {
-            kost.setName(request.name());
+                return kost;
         }
 
-        if (request.description() != null) {
-            kost.setDescription(request.description());
+        public KostResponse create(
+                        User owner,
+                        CreateKostRequest request) {
+
+                Kost kost = Kost.builder()
+                                .name(request.name())
+                                .description(request.description())
+                                .location(request.location())
+                                .price(request.price())
+                                .owner(owner)
+                                .build();
+
+                return KostMapper.toResponse(
+                                kostRepository.save(kost));
         }
 
-        if (request.location() != null) {
-            kost.setLocation(request.location());
+        public Page<KostResponse> ownerKosts(
+                        User owner,
+                        int page,
+                        int size) {
+
+                Pageable pageable = PageRequest.of(
+                                page,
+                                size,
+                                Sort.by("id").descending());
+
+                return kostRepository
+                                .findByOwner(owner, pageable)
+                                .map(KostMapper::toResponse);
         }
 
-        if (request.price() != null) {
-            kost.setPrice(request.price());
+        public KostResponse findById(
+                        Long id) {
+
+                Kost kost = kostRepository
+                                .findById(id)
+                                .orElseThrow(() -> new EntityNotFoundException(
+                                                "Kost not found"));
+
+                return KostMapper.toResponse(kost);
         }
 
-        return KostMapper.toResponse(
-                kostRepository.save(kost));
-    }
+        public KostResponse update(
+                        User owner,
+                        Long id,
+                        UpdateKostRequest request) {
 
-    public void delete(
-            Long id) {
+                Kost kost = getOwnedKost(
+                                id,
+                                owner);
 
-        Kost kost = kostRepository
-                .findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Kost not found"));
+                if (request.name() != null) {
+                        kost.setName(request.name());
+                }
 
-        kostRepository.delete(kost);
-    }
+                if (request.description() != null) {
+                        kost.setDescription(request.description());
+                }
 
-    public Page<KostResponse> search(
-            SearchKostRequest request,
-            int page,
-            int size) {
+                if (request.location() != null) {
+                        kost.setLocation(request.location());
+                }
 
-        Pageable pageable = PageRequest.of(
-                page,
-                size,
-                Sort.by(
-                        "desc".equalsIgnoreCase(request.sort())
-                                ? Sort.Direction.DESC
-                                : Sort.Direction.ASC,
-                        "price"));
+                if (request.price() != null) {
+                        kost.setPrice(request.price());
+                }
 
-        return kostRepository
-                .findAll(
-                        KostSpecification.search(request),
-                        pageable)
-                .map(KostMapper::toResponse);
-    }
+                return KostMapper.toResponse(
+                                kostRepository.save(kost));
+        }
+
+        public void delete(
+                        User owner,
+                        Long id) {
+
+                Kost kost = getOwnedKost(
+                                id,
+                                owner);
+
+                kostRepository.delete(kost);
+        }
+
+        public Page<KostResponse> search(
+                        SearchKostRequest request,
+                        int page,
+                        int size) {
+
+                Pageable pageable = PageRequest.of(
+                                page,
+                                size,
+                                Sort.by(
+                                                "desc".equalsIgnoreCase(request.sort())
+                                                                ? Sort.Direction.DESC
+                                                                : Sort.Direction.ASC,
+                                                "price"));
+
+                return kostRepository
+                                .findAll(
+                                                KostSpecification.search(request),
+                                                pageable)
+                                .map(KostMapper::toResponse);
+        }
 }

@@ -3,6 +3,7 @@ package com.kost.kostapi.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -20,65 +21,85 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private final CustomUserDetailsService userDetailsService;
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final JwtAuthenticationEntryPoint authenticationEntryPoint;
-    private final JwtAccessDeniedHandler accessDeniedHandler;
+        private final CustomUserDetailsService userDetailsService;
+        private final JwtAuthenticationFilter jwtAuthenticationFilter;
+        private final JwtAuthenticationEntryPoint authenticationEntryPoint;
+        private final JwtAccessDeniedHandler accessDeniedHandler;
 
-    @Bean
-    PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+        @Bean
+        PasswordEncoder passwordEncoder() {
+                return new BCryptPasswordEncoder();
+        }
 
-    @Bean
-    AuthenticationProvider authenticationProvider(
-            PasswordEncoder passwordEncoder) {
+        @Bean
+        AuthenticationProvider authenticationProvider(
+                        PasswordEncoder passwordEncoder) {
 
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
+                DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
 
-        provider.setPasswordEncoder(passwordEncoder);
+                provider.setPasswordEncoder(passwordEncoder);
 
-        return provider;
-    }
+                return provider;
+        }
 
-    @Bean
-    AuthenticationManager authenticationManager(
-            AuthenticationConfiguration configuration) throws Exception {
+        @Bean
+        AuthenticationManager authenticationManager(
+                        AuthenticationConfiguration configuration) throws Exception {
 
-        return configuration.getAuthenticationManager();
-    }
+                return configuration.getAuthenticationManager();
+        }
 
-    @Bean
-    SecurityFilterChain securityFilterChain(
-            HttpSecurity http,
-            AuthenticationProvider authenticationProvider) throws Exception {
+        @Bean
+        SecurityFilterChain securityFilterChain(
+                        HttpSecurity http,
+                        AuthenticationProvider authenticationProvider) throws Exception {
 
-        http
-                .csrf(csrf -> csrf.disable())
+                http
+                                .csrf(csrf -> csrf.disable())
 
-                .sessionManagement(session -> session.sessionCreationPolicy(
-                        SessionCreationPolicy.STATELESS))
+                                .sessionManagement(session -> session.sessionCreationPolicy(
+                                                SessionCreationPolicy.STATELESS))
 
-                .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(authenticationEntryPoint)
-                        .accessDeniedHandler(accessDeniedHandler))
+                                .exceptionHandling(exception -> exception
+                                                .authenticationEntryPoint(authenticationEntryPoint)
+                                                .accessDeniedHandler(accessDeniedHandler))
 
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**")
-                        .permitAll()
+                                .authorizeHttpRequests(auth -> auth
 
-                        .requestMatchers("/api/kosts/**")
-                        .permitAll()
+                                                .requestMatchers(
+                                                                "/api/auth/register",
+                                                                "/api/auth/login")
+                                                .permitAll()
 
-                        .anyRequest()
-                        .authenticated())
+                                                .requestMatchers(
+                                                                HttpMethod.GET,
+                                                                "/api/kosts/**")
+                                                .permitAll()
 
-                .authenticationProvider(authenticationProvider)
+                                                .requestMatchers(
+                                                                HttpMethod.POST,
+                                                                "/api/kosts")
+                                                .hasRole("OWNER")
 
-                .addFilterBefore(
-                        jwtAuthenticationFilter,
-                        UsernamePasswordAuthenticationFilter.class);
+                                                .requestMatchers(
+                                                                HttpMethod.PUT,
+                                                                "/api/kosts/**")
+                                                .hasRole("OWNER")
 
-        return http.build();
-    }
+                                                .requestMatchers(
+                                                                HttpMethod.DELETE,
+                                                                "/api/kosts/**")
+                                                .hasRole("OWNER")
+
+                                                .anyRequest()
+                                                .authenticated())
+
+                                .authenticationProvider(authenticationProvider)
+
+                                .addFilterBefore(
+                                                jwtAuthenticationFilter,
+                                                UsernamePasswordAuthenticationFilter.class);
+
+                return http.build();
+        }
 }
