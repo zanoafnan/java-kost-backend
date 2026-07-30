@@ -1,14 +1,16 @@
 package com.kost.kostapi.dto.kost;
 
+import java.math.BigDecimal;
+
 public record SearchKostRequest(
 
         String name,
 
         String location,
 
-        Integer minPrice,
+        BigDecimal minPrice,
 
-        Integer maxPrice,
+        BigDecimal maxPrice,
 
         String sort
 
