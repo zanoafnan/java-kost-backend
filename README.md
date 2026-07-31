@@ -38,7 +38,14 @@ Backend REST API for a kost management system built with Spring Boot.
 
 - Availability request deducts 5 credits from the user's credit
 - Owner cannot request availability
-- Credit deducted automatically
+- Request is rejected when credit is insufficient
+
+### Monthly Credit Recharge
+
+- Scheduled monthly credit reset
+- Owner credit is always 0
+- Regular credit is reset to 20
+- Premium credit is reset to 40
 
 ---
 
@@ -150,6 +157,46 @@ or
 
 ---
 
+## Monthly Credit Scheduler
+
+Credits are automatically reset every month by Spring Scheduler.
+
+| Role | Monthly Credit |
+|------|---------------:|
+| OWNER | 0 |
+| REGULAR | 20 |
+| PREMIUM | 40 |
+
+Scheduler implementation:
+
+```
+src/main/java/com/kost/kostapi/scheduler/CreditScheduler.java
+```
+
+Business logic:
+
+```
+src/main/java/com/kost/kostapi/service/CreditService.java
+```
+
+Cron expression:
+
+```java
+@Scheduled(cron = "0 0 0 1 * *")
+```
+
+Runs at 00:00 on the first day of every month.
+
+To enable scheduling, add:
+
+```java
+@EnableScheduling
+```
+
+to the Spring Boot application class.
+
+---
+
 ## Testing
 
 Integration tests cover:
@@ -159,20 +206,23 @@ Integration tests cover:
 - Authorization
 - Availability request
 - Credit deduction
+- Monthly credit recharge
 - Validation
 - Error handling
+
+Unit tests cover:
+
+- CreditService
+- CreditScheduler
 
 Total tests:
 
 ```
-26 tests
+30 tests
 ```
 
 ---
 
-## Project Structure
-
-```
 ## Project Structure
 
 ```
@@ -185,6 +235,7 @@ kost-api/
 │   │   │           └── kostapi
 │   │   │               ├── controller
 │   │   │               ├── service
+│   │   │               ├── scheduler
 │   │   │               ├── repository
 │   │   │               ├── entity
 │   │   │               ├── dto
@@ -209,10 +260,10 @@ kost-api/
 │                       ├── BaseIntegrationTest.java
 │                       ├── AuthControllerTest.java
 │                       ├── KostControllerTest.java
-│                       └── AvailabilityControllerTest.java
+│                       ├── AvailabilityControllerTest.java
+│                       ├── CreditServiceTest.java
+│                       └── CreditSchedulerTest.java
 │
 ├── pom.xml
 └── README.md
-```
-
 ```
