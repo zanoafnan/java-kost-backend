@@ -6,6 +6,7 @@ import com.kost.kostapi.dto.auth.LoginRequest;
 import com.kost.kostapi.entity.User;
 import com.kost.kostapi.enums.CreditAmount;
 import com.kost.kostapi.enums.UserRole;
+import com.kost.kostapi.repository.KostRepository;
 import com.kost.kostapi.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +38,9 @@ public abstract class BaseIntegrationTest {
 
     @Autowired
     protected PasswordEncoder passwordEncoder;
+
+    @Autowired
+    protected KostRepository kostRepository;
 
     @BeforeEach
     void cleanDatabase() {
@@ -78,14 +82,12 @@ public abstract class BaseIntegrationTest {
 
         LoginRequest request = new LoginRequest(
                 user.getEmail(),
-                "password"
-        );
+                "password");
 
         String json = mockMvc.perform(
                 post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request))
-        )
+                        .content(objectMapper.writeValueAsString(request)))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
