@@ -23,15 +23,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("local")
 @Transactional
+@ActiveProfiles("local")
 public abstract class BaseIntegrationTest {
 
     @Autowired
     protected MockMvc mockMvc;
 
-    @Autowired
-    protected ObjectMapper objectMapper;
+    protected final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
     protected UserRepository userRepository;
@@ -79,12 +78,14 @@ public abstract class BaseIntegrationTest {
 
         LoginRequest request = new LoginRequest(
                 user.getEmail(),
-                "password");
+                "password"
+        );
 
         String json = mockMvc.perform(
                 post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(objectMapper.writeValueAsString(request))
+        )
                 .andReturn()
                 .getResponse()
                 .getContentAsString();

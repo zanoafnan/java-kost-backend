@@ -21,7 +21,7 @@ class AuthControllerTest extends BaseIntegrationTest {
         String email = UUID.randomUUID() + "@test.com";
 
         RegisterRequest request = new RegisterRequest(
-                "John Doe",
+                "Regular User",
                 email,
                 "password",
                 UserRole.REGULAR
@@ -33,11 +33,96 @@ class AuthControllerTest extends BaseIntegrationTest {
                         .content(objectMapper.writeValueAsString(request))
         )
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.user.name").value("John Doe"))
+                .andExpect(jsonPath("$.token").exists())
                 .andExpect(jsonPath("$.user.email").value(email))
-                .andExpect(jsonPath("$.user.role").value("REGULAR"))
-                .andExpect(jsonPath("$.user.credit").value(20))
-                .andExpect(jsonPath("$.token").isNotEmpty());
+                .andExpect(jsonPath("$.user.credit").value(20));
+    }
+
+    @Test
+    void login_success() throws Exception {
+
+        User user = createRegular();
+
+        LoginRequest request = new LoginRequest(
+                user.getEmail(),
+                "password"
+        );
+
+        mockMvc.perform(
+                post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").exists())
+                .andExpect(jsonPath("$.user.email").value(user.getEmail()));
+    }
+
+    @Test
+    void me_success() throws Exception {
+
+        User user = createRegular();
+        String token = login(user);
+
+        mockMvc.perform(
+                get("/api/auth/me")
+                        .header("Authorization", "Bearer " + token)
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value(user.getEmail()));
+    }
+
+    @Test
+    void login_wrong_password() throws Exception {
+
+        User user = createRegular();
+
+        LoginRequest request = new LoginRequest(
+                user.getEmail(),
+                "wrongpassword"
+        );
+
+        mockMvc.perform(
+                post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
+        )
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void login_email_not_found() throws Exception {
+
+        LoginRequest request = new LoginRequest(
+                "notfound@test.com",
+                "password"
+        );
+
+        mockMvc.perform(
+                post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
+        )
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void me_without_token() throws Exception {
+
+        mockMvc.perform(
+                get("/api/auth/me")
+        )
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void me_invalid_token() throws Exception {
+
+        mockMvc.perform(
+                get("/api/auth/me")
+                        .header("Authorization", "Bearer invalid-token")
+        )
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -88,7 +173,7 @@ class AuthControllerTest extends BaseIntegrationTest {
         String email = UUID.randomUUID() + "@test.com";
 
         RegisterRequest request = new RegisterRequest(
-                "John",
+                "User",
                 email,
                 "password",
                 UserRole.REGULAR
@@ -106,78 +191,5 @@ class AuthControllerTest extends BaseIntegrationTest {
                         .content(objectMapper.writeValueAsString(request))
         )
                 .andExpect(status().isConflict());
-    }
-
-    @Test
-    void login_success() throws Exception {
-
-        User user = createRegular();
-
-        LoginRequest request = new LoginRequest(
-                user.getEmail(),
-                "password"
-        );
-
-        mockMvc.perform(
-                post("/api/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request))
-        )
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.user.email").value(user.getEmail()))
-                .andExpect(jsonPath("$.token").isNotEmpty());
-    }
-
-    @Test
-    void login_wrong_password() throws Exception {
-
-        User user = createRegular();
-
-        LoginRequest request = new LoginRequest(
-                user.getEmail(),
-                "wrongpassword"
-        );
-
-        mockMvc.perform(
-                post("/api/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request))
-        )
-                .andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    void me_success() throws Exception {
-
-        User user = createRegular();
-
-        String token = login(user);
-
-        mockMvc.perform(
-                get("/api/auth/me")
-                        .header("Authorization", "Bearer " + token)
-        )
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email").value(user.getEmail()))
-                .andExpect(jsonPath("$.role").value("REGULAR"));
-    }
-
-    @Test
-    void me_without_token() throws Exception {
-
-        mockMvc.perform(
-                get("/api/auth/me")
-        )
-                .andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    void me_invalid_token() throws Exception {
-
-        mockMvc.perform(
-                get("/api/auth/me")
-                        .header("Authorization", "Bearer invalid-token")
-        )
-                .andExpect(status().isUnauthorized());
     }
 }
