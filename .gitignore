@@ -34,3 +34,6 @@ build/
 
 ### Spring Boot local config ###
 application-local.yaml
+
+### Spring Boot test config ###
+application-test.yaml
