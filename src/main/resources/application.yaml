@@ -3,9 +3,9 @@ spring:
     name: kost-api
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/kost_db
-    username: postgres
-    password: password
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/kost_db}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:password}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -26,5 +26,5 @@ server:
   port: 8080
 
 jwt:
-  secret: secret
-  expiration: 86400000
+  secret: ${JWT_SECRET:secret}
+  expiration: ${JWT_EXPIRATION:86400000}
