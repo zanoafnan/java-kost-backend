@@ -11,161 +11,180 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    private ResponseEntity<ErrorResponse> build(
-            HttpStatus status,
-            String message,
-            HttpServletRequest request) {
+        private ResponseEntity<ErrorResponse> build(
+                        HttpStatus status,
+                        String message,
+                        HttpServletRequest request) {
 
-        return ResponseEntity.status(status).body(
+                return ResponseEntity.status(status).body(
 
-                new ErrorResponse(
+                                new ErrorResponse(
 
-                        LocalDateTime.now(),
+                                                LocalDateTime.now(),
 
-                        status.value(),
+                                                status.value(),
 
-                        status.getReasonPhrase(),
+                                                status.getReasonPhrase(),
 
-                        message,
+                                                message,
 
-                        request.getRequestURI()));
-    }
+                                                request.getRequestURI()));
+        }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> validation(
+        @ExceptionHandler(MethodArgumentNotValidException.class)
+        public ResponseEntity<ErrorResponse> validation(
 
-            MethodArgumentNotValidException ex,
+                        MethodArgumentNotValidException ex,
 
-            HttpServletRequest request
+                        HttpServletRequest request
 
-    ) {
+        ) {
 
-        FieldError field = ex.getBindingResult()
-                .getFieldErrors()
-                .getFirst();
+                FieldError field = ex.getBindingResult()
+                                .getFieldErrors()
+                                .getFirst();
 
-        return build(
+                return build(
 
-                HttpStatus.BAD_REQUEST,
+                                HttpStatus.BAD_REQUEST,
 
-                field == null
-                        ? "Validation failed"
-                        : field.getDefaultMessage(),
+                                field == null
+                                                ? "Validation failed"
+                                                : field.getDefaultMessage(),
 
-                request);
-    }
+                                request);
+        }
 
-    @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ErrorResponse> constraint(
+        @ExceptionHandler(ResponseStatusException.class)
+        public ResponseEntity<ErrorResponse> responseStatus(
 
-            ConstraintViolationException ex,
+                        ResponseStatusException ex,
 
-            HttpServletRequest request
+                        HttpServletRequest request
 
-    ) {
+        ) {
 
-        return build(
+                return build(
 
-                HttpStatus.BAD_REQUEST,
+                                HttpStatus.valueOf(ex.getStatusCode().value()),
 
-                ex.getMessage(),
+                                ex.getReason(),
 
-                request);
-    }
+                                request);
+        }
 
-    @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<ErrorResponse> duplicate(
+        @ExceptionHandler(ConstraintViolationException.class)
+        public ResponseEntity<ErrorResponse> constraint(
 
-            DataIntegrityViolationException ex,
+                        ConstraintViolationException ex,
 
-            HttpServletRequest request
+                        HttpServletRequest request
 
-    ) {
+        ) {
 
-        return build(
+                return build(
 
-                HttpStatus.CONFLICT,
+                                HttpStatus.BAD_REQUEST,
 
-                "Resource already exists",
+                                ex.getMessage(),
 
-                request);
-    }
+                                request);
+        }
 
-    @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ErrorResponse> badCredentials(
+        @ExceptionHandler(DataIntegrityViolationException.class)
+        public ResponseEntity<ErrorResponse> duplicate(
 
-            BadCredentialsException ex,
+                        DataIntegrityViolationException ex,
 
-            HttpServletRequest request
+                        HttpServletRequest request
 
-    ) {
+        ) {
 
-        return build(
+                return build(
 
-                HttpStatus.UNAUTHORIZED,
+                                HttpStatus.CONFLICT,
 
-                "Invalid email or password",
+                                "Resource already exists",
 
-                request);
-    }
+                                request);
+        }
 
-    @ExceptionHandler(UsernameNotFoundException.class)
-    public ResponseEntity<ErrorResponse> userNotFound(
+        @ExceptionHandler(BadCredentialsException.class)
+        public ResponseEntity<ErrorResponse> badCredentials(
 
-            UsernameNotFoundException ex,
+                        BadCredentialsException ex,
 
-            HttpServletRequest request
+                        HttpServletRequest request
 
-    ) {
+        ) {
 
-        return build(
+                return build(
 
-                HttpStatus.UNAUTHORIZED,
+                                HttpStatus.UNAUTHORIZED,
 
-                ex.getMessage(),
+                                "Invalid email or password",
 
-                request);
-    }
+                                request);
+        }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> exception(
+        @ExceptionHandler(UsernameNotFoundException.class)
+        public ResponseEntity<ErrorResponse> userNotFound(
 
-            Exception ex,
+                        UsernameNotFoundException ex,
 
-            HttpServletRequest request
+                        HttpServletRequest request
 
-    ) {
+        ) {
 
-        return build(
+                return build(
 
-                HttpStatus.INTERNAL_SERVER_ERROR,
+                                HttpStatus.UNAUTHORIZED,
 
-                ex.getMessage(),
+                                ex.getMessage(),
 
-                request);
-    }
+                                request);
+        }
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErrorResponse> illegalArgument(
+        @ExceptionHandler(Exception.class)
+        public ResponseEntity<ErrorResponse> exception(
 
-            IllegalArgumentException ex,
+                        Exception ex,
 
-            HttpServletRequest request
+                        HttpServletRequest request
 
-    ) {
+        ) {
 
-        return build(
+                return build(
 
-                HttpStatus.CONFLICT,
+                                HttpStatus.INTERNAL_SERVER_ERROR,
 
-                ex.getMessage(),
+                                ex.getMessage(),
 
-                request);
-    }
+                                request);
+        }
+
+        @ExceptionHandler(IllegalArgumentException.class)
+        public ResponseEntity<ErrorResponse> illegalArgument(
+
+                        IllegalArgumentException ex,
+
+                        HttpServletRequest request
+
+        ) {
+
+                return build(
+
+                                HttpStatus.CONFLICT,
+
+                                ex.getMessage(),
+
+                                request);
+        }
 }

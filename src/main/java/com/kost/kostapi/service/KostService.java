@@ -12,7 +12,9 @@ import com.kost.kostapi.specification.KostSpecification;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -28,9 +30,9 @@ public class KostService {
                                 .findById(id)
                                 .orElseThrow(() -> new EntityNotFoundException(
                                                 "Kost not found"));
-
                 if (!kost.getOwner().getId().equals(owner.getId())) {
-                        throw new SecurityException(
+                        throw new ResponseStatusException(
+                                        HttpStatus.FORBIDDEN,
                                         "You do not own this kost.");
                 }
 
