@@ -25,7 +25,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
-@ActiveProfiles("local")
+@ActiveProfiles("test")
 public abstract class BaseIntegrationTest {
 
     @Autowired
