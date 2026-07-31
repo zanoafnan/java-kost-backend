@@ -18,115 +18,69 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class KostController {
 
-    private final KostService kostService;
+        private final KostService kostService;
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public KostResponse create(
+        @PostMapping
+        @ResponseStatus(HttpStatus.CREATED)
+        public KostResponse create(
+                        @AuthenticationPrincipal User user,
+                        @Valid @RequestBody CreateKostRequest request) {
+                return kostService.create(
+                                user,
+                                request);
+        }
 
-            @AuthenticationPrincipal User user,
+        @GetMapping("/owner")
+        public Page<KostResponse> ownerKosts(
+                        @AuthenticationPrincipal User user,
+                        @RequestParam(defaultValue = "0") int page,
+                        @RequestParam(defaultValue = "10") int size) {
+                return kostService.ownerKosts(
+                                user,
+                                page,
+                                size);
+        }
 
-            @Valid @RequestBody CreateKostRequest request
+        @GetMapping
+        public Page<KostResponse> search(
 
-    ) {
+                        @RequestParam(required = false) String name,
+                        @RequestParam(required = false) String location,
+                        @RequestParam(required = false) java.math.BigDecimal minPrice,
+                        @RequestParam(required = false) java.math.BigDecimal maxPrice,
+                        @RequestParam(defaultValue = "asc") String sort,
+                        @RequestParam(defaultValue = "0") int page,
+                        @RequestParam(defaultValue = "10") int size) {
+                return kostService.search(
+                                new SearchKostRequest(
+                                                name,
+                                                location,
+                                                minPrice,
+                                                maxPrice,
+                                                sort),
+                                page,
+                                size);
+        }
 
-        return kostService.create(
-                user,
-                request);
-    }
+        @GetMapping("/{id}")
+        public KostResponse detail(
+                        @PathVariable Long id) {
+                return kostService.findById(id);
+        }
 
-    @GetMapping("/owner")
-    public Page<KostResponse> ownerKosts(
+        @PutMapping("/{id}")
+        public KostResponse update(
+                        @AuthenticationPrincipal User user,
+                        @PathVariable Long id,
+                        @Valid @RequestBody UpdateKostRequest request) {
+                return kostService.update(user, id, request);
+        }
 
-            @AuthenticationPrincipal User user,
-
-            @RequestParam(defaultValue = "0") int page,
-
-            @RequestParam(defaultValue = "10") int size
-
-    ) {
-
-        return kostService.ownerKosts(
-                user,
-                page,
-                size);
-    }
-
-    @GetMapping
-    public Page<KostResponse> search(
-
-            @RequestParam(required = false) String name,
-
-            @RequestParam(required = false) String location,
-
-            @RequestParam(required = false) java.math.BigDecimal minPrice,
-
-            @RequestParam(required = false) java.math.BigDecimal maxPrice,
-
-            @RequestParam(defaultValue = "asc") String sort,
-
-            @RequestParam(defaultValue = "0") int page,
-
-            @RequestParam(defaultValue = "10") int size
-
-    ) {
-
-        return kostService.search(
-
-                new SearchKostRequest(
-
-                        name,
-
-                        location,
-
-                        minPrice,
-
-                        maxPrice,
-
-                        sort),
-
-                page,
-
-                size);
-    }
-
-    @GetMapping("/{id}")
-    public KostResponse detail(
-
-            @PathVariable Long id
-
-    ) {
-
-        return kostService.findById(id);
-    }
-
-    public KostResponse update(
-
-            @AuthenticationPrincipal User user,
-
-            @PathVariable Long id,
-
-            @Valid @RequestBody UpdateKostRequest request
-
-    ) {
-
-        return kostService.update(
-                user,
-                id,
-                request);
-    }
-
-    public void delete(
-
-            @AuthenticationPrincipal User user,
-
-            @PathVariable Long id
-
-    ) {
-
-        kostService.delete(
-                user,
-                id);
-    }
-
+        @DeleteMapping("/{id}")
+        @ResponseStatus(HttpStatus.NO_CONTENT)
+        public void delete(
+                        @AuthenticationPrincipal User user,
+                        @PathVariable Long id) {
+                kostService.delete(user, id);
+        }
 }
