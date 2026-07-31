@@ -9,10 +9,13 @@ import com.kost.kostapi.enums.CreditAmount;
 import com.kost.kostapi.repository.UserRepository;
 import com.kost.kostapi.security.JwtService;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -29,7 +32,9 @@ public class AuthService {
     public AuthResponse register(RegisterRequest request) {
 
         if (userRepository.existsByEmail(request.email())) {
-            throw new IllegalArgumentException("Email already exists");
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Email already exists");
         }
 
         int credit = switch (request.role()) {

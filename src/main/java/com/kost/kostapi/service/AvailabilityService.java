@@ -10,6 +10,8 @@ import com.kost.kostapi.repository.KostRepository;
 import com.kost.kostapi.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,56 +19,45 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class AvailabilityService {
 
-    private final AvailabilityRequestRepository availabilityRepository;
-    private final KostRepository kostRepository;
-    private final UserRepository userRepository;
+        private final AvailabilityRequestRepository availabilityRepository;
+        private final KostRepository kostRepository;
+        private final UserRepository userRepository;
 
-    @Transactional
-    public AvailabilityResponse create(
-            User user,
-            Long kostId
-    ) {
+        @Transactional
+        public AvailabilityResponse create(
+                        User user,
+                        Long kostId) {
 
-        if (user.getRole() == UserRole.OWNER) {
-            throw new IllegalStateException(
-                    "Owner cannot request availability."
-            );
+                if (user.getRole() == UserRole.OWNER) {
+                        throw new AccessDeniedException(
+                                        "Owner cannot request availability.");
+                }
+
+                Kost kost = kostRepository
+                                .findById(kostId)
+                                .orElseThrow(() -> new EntityNotFoundException(
+                                                "Kost not found."));
+
+                int creditUsed = 5;
+
+                if (user.getCredit() < creditUsed) {
+                        throw new IllegalStateException(
+                                        "Insufficient credit.");
+                }
+
+                user.setCredit(
+                                user.getCredit() - creditUsed);
+
+                userRepository.save(user);
+
+                AvailabilityRequest request = AvailabilityRequest.builder()
+                                .kost(kost)
+                                .user(user)
+                                .creditUsed(creditUsed)
+                                .build();
+
+                availabilityRepository.save(request);
+
+                return AvailabilityMapper.toResponse(request);
         }
-
-        int cost = switch (user.getRole()) {
-            case REGULAR -> 5;
-            case PREMIUM -> 2;
-            default -> 0;
-        };
-
-        if (user.getCredit() < cost) {
-            throw new IllegalStateException(
-                    "Insufficient credit."
-            );
-        }
-
-        Kost kost = kostRepository
-                .findById(kostId)
-                .orElseThrow(() ->
-                        new EntityNotFoundException(
-                                "Kost not found."
-                        ));
-
-        user.setCredit(
-                user.getCredit() - cost
-        );
-
-        userRepository.save(user);
-
-        AvailabilityRequest request =
-                AvailabilityRequest.builder()
-                        .kost(kost)
-                        .user(user)
-                        .build();
-
-        availabilityRepository.save(request);
-
-        return AvailabilityMapper.toResponse(request);
-    }
-
 }
