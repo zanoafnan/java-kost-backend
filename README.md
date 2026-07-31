@@ -88,6 +88,75 @@ are ignored by Git.
 
 ---
 
+## Installation
+
+Clone the repository
+
+```bash
+git clone <repository-url>
+cd kost-api
+```
+
+Build the project and download dependencies
+
+```bash
+./mvnw clean install
+```
+
+or
+
+```bash
+mvn clean install
+```
+
+Create your local configuration file
+
+```
+src/main/resources/application-local.yaml
+```
+
+Example:
+
+```yaml
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/kost_db
+    username: postgres
+    password: password
+
+jwt:
+  secret: your-secret-key
+  expiration: 86400000
+```
+
+Create the PostgreSQL database
+
+```
+kost_db
+```
+
+Flyway migrations will run automatically when the application starts.
+
+Start the application
+
+```bash
+./mvnw spring-boot:run
+```
+
+or
+
+```bash
+mvn spring-boot:run
+```
+
+API available at
+
+```
+http://localhost:8080
+```
+
+---
+
 ## Database
 
 Create a PostgreSQL database.
